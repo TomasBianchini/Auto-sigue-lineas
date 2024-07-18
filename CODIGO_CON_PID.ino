@@ -1,18 +1,18 @@
-// Definir pines para el control del motor
-// derecha
-const int motorPin1 = 10;
-const int motorPin2 = 11; 
-const int enablePin1y2 = 9; 
 
-const int motorPin3 = 6; 
-const int motorPin4 = 5; 
-const int enablePin3y4 = 3; 
+// Motor izquierda
+int i3 = 10;
+int i4 = 11; 
+int enableI = 9; 
+// Motor derecha
+int i2 = 6; 
+int i1 = 5; 
+int enableD = 3; 
 
-const int sensorCentral = A0;
-const int sensorDerecho = A1;
-const int sensorIzquierdo = A2;
 
-const int umbral = 500;
+int sCentro = A0;
+int sDerecha = A1;
+int sIzquierda = A2;
+
 
 float  Kp = 0.7;  
 float  Ki = 0.0008;         
@@ -26,65 +26,35 @@ int D;
 int velBase = 70;
 
 void setup() {
-  // configurar pines como salidas 
-  pinMode(motorPin1, OUTPUT);
-  pinMode(motorPin2, OUTPUT);
-  pinMode(enablePin1y2, OUTPUT);
-  pinMode(motorPin3, OUTPUT);
-  pinMode(motorPin4, OUTPUT);
-  pinMode(enablePin3y4, OUTPUT);
 
-  // configurar pines de sensores como entrada
-  pinMode(sensorCentral, INPUT);
+  pinMode(i3, OUTPUT);
+  pinMode(i4, OUTPUT);
+  pinMode(enableI, OUTPUT);
+  pinMode(i2, OUTPUT);
+  pinMode(i1, OUTPUT);
+  pinMode(enableD, OUTPUT);
 
+  pinMode(sCentro, INPUT);
+  pinMode(sDerecha, INPUT);
+  pinMode(sIzquierda, INPUT);
+
+ 
+  digitalWrite(i3, LOW);
+  digitalWrite(i4, LOW);
+  digitalWrite(enableI, LOW);
+  digitalWrite(i2, LOW);
+  digitalWrite(i1, LOW);
+  digitalWrite(enableD, LOW);
   
-  // Inicializar motor y LEDs apagados
-  digitalWrite(motorPin1, LOW);
-  digitalWrite(motorPin2, LOW);
-  digitalWrite(enablePin1y2, LOW);
-  digitalWrite(motorPin3, LOW);
-  digitalWrite(motorPin4, LOW);
-  digitalWrite(enablePin3y4, LOW);
-  
-  Serial.begin(9600);
 }
 
 
 void loop() {
-  control_PID();
-}
-
-// función para gestionar velocidad y direccion del motor
-void control_auto(int vd,int vi) {
-  if(vd < 0) {
-    digitalWrite(motorPin1, LOW);
-  	digitalWrite(motorPin2, HIGH);
-    vd = -vd;
-  } else {
-    digitalWrite(motorPin1, HIGH);
-  	digitalWrite(motorPin2, LOW);
-  }
+  int valorC = analogRead(sCentro);
+  int valorD = analogRead(sDerecha);
+  int valorI = analogRead(sIzquierda);
   
-  if(vi < 0) {
-    digitalWrite(motorPin3, LOW);
-  	digitalWrite(motorPin4, HIGH);
-    vi = -vi;
-  } else {
-    digitalWrite(motorPin3, HIGH);
-  	digitalWrite(motorPin4, LOW);
-  }
-  
-  analogWrite(enablePin1y2, vd);  
-  analogWrite(enablePin3y4, vi);
-}
-
-// velocidad con controlador PID
-void control_PID() {
-  int valorCentral = analogRead(sensorCentral);
-  int valorDerecho = analogRead(sensorDerecho);
-  int valorIzquierdo = analogRead(sensorIzquierdo);
-  
-  int ubi = ubicacion(valorDerecho,valorCentral,valorIzquierdo);
+  int ubi = posicion(valorD,valorC,valorI);
   
   int error = 1000 - ubi;
 
@@ -96,7 +66,7 @@ void control_PID() {
   ultError = error;
   
   int vel = P*Kp + I*Ki + D*Kd;
-  Serial.println(vel);
+
   int motorD = velBase - vel;
   int motorI = velBase +  vel;
   
@@ -113,12 +83,36 @@ void control_PID() {
     motorI = -70;
   } 
 
-  control_auto(motorD,motorI);
-  
+  velocidad(motorD,motorI);
 }
 
 
-int ubicacion(int d,int c, int i){
+void velocidad(int vd,int vi) {
+  if(vd < 0) {
+    digitalWrite(i3, LOW);
+  	digitalWrite(i4, HIGH);
+    vd = -vd;
+  } else {
+    digitalWrite(i3, HIGH);
+  	digitalWrite(i4, LOW);
+  }
+  
+  if(vi < 0) {
+    digitalWrite(i2, LOW);
+  	digitalWrite(i1, HIGH);
+    vi = -vi;
+  } else {
+    digitalWrite(i2, HIGH);
+  	digitalWrite(i1, LOW);
+  }
+  
+  analogWrite(enableI, vd);  
+  analogWrite(enableD, vi);
+}
+
+
+
+int posicion(int d,int c, int i){
   
   long pos = 0L * d + 1000L * c + 2000L * i;
   pos = pos /(d+c+i);
